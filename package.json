@@ -1,0 +1,37 @@
+{
+  "name": "ddd-generate",
+  "version": "1.0.0",
+  "description": "Generate DDD project files for entity",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:BB-Today/be-cli.git"
+  },
+  "main": "bin/cli.js",
+  "bin": {
+    "ddd-generate": "./bin/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:w": "tsc -w -p tsconfig.json",
+    "clear": "rm -rf dist",
+    "lint": "eslint --quiet --ext .ts .",
+    "lint:fix": "eslint --fix --ext .ts .",
+    "prepare": "husky install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "yargs": "^17.5.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.7.18",
+    "@types/yargs": "^17.0.12",
+    "@typescript-eslint/eslint-plugin": "^5.37.0",
+    "@typescript-eslint/parser": "^5.37.0",
+    "eslint": "^8.23.1",
+    "husky": "^8.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.3"
+  }
+}
