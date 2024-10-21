@@ -43,10 +43,11 @@ import { ${name} as ${name}Model, Prisma } from '@prisma/client';
 import { I${name}Repository } from '../../../domain/${fileName}/${fileName}.repository.i';
 import { DatabaseService } from '../../database/database.service';
 import { ListOptions, ListResult } from '../../../domain/domain.types';
+import { BaseRepository } from './base/base.repository';
 import * as _ from 'lodash';
   
 @Injectable()
-class Repository implements I${name}Repository {
+class Repository extends BaseRepository<${name}, ${name}Model> implements I${name}Repository {
   constructor(private readonly databaseService: DatabaseService) { }
   
    private fromEntity(${objectName}: Partial<${name}>): Omit<${name}Model, 'updatedAt'> {
@@ -61,65 +62,6 @@ class Repository implements I${name}Repository {
       ...data,
     });
   }
-  
-  public async create(data: Partial<${name}>): Promise<${name}> {
-    const ${objectName} = await this.databaseService.${objectName}.create({
-      data: this.fromEntity(data),
-    });
-
-    return this.toEntity(${objectName});
-  }
-  
-  public async get(options: ListOptions<${name}> = {}): Promise<${name} | null> {
-    const findFirstArgs = options ? this.buildIncomeFindManyArgs(options) : {};
-    const ${objectName} = await this.databaseService.${objectName}.findFirst(findFirstArgs);
-
-    return ${objectName} && this.toEntity(${objectName});
-  }
-
-  public async getById(id: string): Promise<${name}> {
-    const ${objectName} = await this.databaseService.${objectName}.findUnique({
-      where: { id },
-    });
-
-    return ${objectName} ? this.toEntity(${objectName}) : null;
-  }
-
-  public async list(options?: ListOptions<${name}>): Promise<ListResult<${name}>> {
-    const findManyArgs = this.buildIncomeFindManyArgs(options);
-    const ${objectName}s = await this.databaseService.${objectName}.findMany(findManyArgs);
-
-    return {
-      total: ${objectName}s.length,
-      items: ${objectName}s.map(item => this.toEntity(item)),
-    }
-  }
-  
-  public async update(id: string, data: Partial<Omit<${name}, 'id'>>): Promise<${name}> {
-    const ${objectName} = await this.databaseService.${objectName}.update({
-      where: { id },
-      data,
-    });
-
-    return this.toEntity(${objectName});
-  }
-
-  public async delete(id: string): Promise<void> {
-    await this.databaseService.${objectName}.delete({ where: { id } });
-  }
-
-  buildIncomeFindManyArgs(options?: ListOptions<${name}>): Prisma.${name}FindManyArgs {
-    const findManyArgs: Prisma.${name}FindFirstArgs | Prisma.${name}FindManyArgs = {};
-    
-    if (options.filter) {
-      findManyArgs.where = _.omitBy(options.filter, _.isUndefined.bind(_));
-    }
-    if (options.sort) findManyArgs.orderBy = options.sort;
-    if (options.skip) findManyArgs.skip = options.skip;
-    if (options.limit) findManyArgs.take = options.limit;
-
-    return findManyArgs;
-  }
 }
 
 export const ${name}Repository: Provider = {
@@ -128,7 +70,7 @@ export const ${name}Repository: Provider = {
 };
 `;
     (0, fs_1.mkdirSync)(`./src/infra/repository/${fileName}`, { recursive: true });
-    (0, fs_1.writeFileSync)(`./src/infra/repository/${fileName}/${fileName}.repository.ts`, data);
+    (0, fs_1.writeFileSync)(`./src/infra/database/repository/${fileName}.repository.ts`, data);
 }
 function generateModule(name, fileName) {
     const data = `import { Module } from '@nestjs/common';
@@ -188,7 +130,7 @@ function generateDto(name, fileName) {
     const data = `import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsString, ValidateNested, IsUUID, IsPositive, IsInt, IsOptional, IsObject, IsEnum, IsDateString } from 'class-validator';
 import { PartialType, PickType } from '@nestjs/swagger';
-import { SortDirection } from '../../interfaces.types';
+import { SortDirection } from '../../types.dto';
 
 export class ${name} {
   @IsString() @IsUUID() @IsNotEmpty() id: string;
@@ -336,7 +278,7 @@ export class ${name}Controller {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete ${fileName}' })
   @UseGuards(AuthGuard('jwt'))
-  async cancelChallenge(@Req() req, @Param() params: Delete${name}Params): Promise<Delete${name}Response> {
+  async delete${name}(@Req() req, @Param() params: Delete${name}Params): Promise<Delete${name}Response> {
     await this.${objectName}Service.delete(params.id);
 
     return {
