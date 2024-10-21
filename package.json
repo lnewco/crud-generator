@@ -1,5 +1,5 @@
 {
-  "name": "ddd-generate",
+  "name": "crud-generate",
   "version": "1.0.0",
   "description": "Generate DDD project files for entity",
   "repository": {
