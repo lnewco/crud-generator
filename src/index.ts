@@ -90,7 +90,7 @@ export class ${name}Module {}
 
 function generateService(name: string, objectName: string, fileName: string): void {
   const data = `import { Injectable, Inject } from '@nestjs/common';
-import { ListOptions, ListResult } from '../domain.types';
+import { FindOptions, FindManyResult } from '../domain.types';
 import { I${name}Repository } from './${fileName}.repository.i';
 import { ${name} } from './${fileName}.entity';
 
@@ -105,7 +105,7 @@ export class ${name}Service {
     return this.${objectName}Repository.create(data);
   }
 
-  async get(options: ListOptions<${name}>): Promise<${name}> {
+  async get(options: FindOptions<${name}>): Promise<${name}> {
     return this.${objectName}Repository.get(options);
   }
    
@@ -113,7 +113,7 @@ export class ${name}Service {
     return this.${objectName}Repository.getById(id);
   }
   
-  async list(options?: ListOptions<${name}>): Promise<ListResult<${name}>> {
+  async list(options?: FindOptions<${name}>): Promise<FindManyResult<${name}>> {
     return this.${objectName}Repository.list(options);
   }
 
