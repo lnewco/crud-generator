@@ -126,7 +126,7 @@ export class ${name}Service {
 `;
     (0, fs_1.writeFileSync)(`./src/domain/${fileName}/${fileName}.service.ts`, data);
 }
-function generateDto(name, fileName) {
+function generateDto(name, fileName, path) {
     const data = `import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsString, ValidateNested, IsUUID, IsPositive, IsInt, IsOptional, IsObject, IsEnum, IsDateString } from 'class-validator';
 import { PartialType, PickType } from '@nestjs/swagger';
@@ -176,10 +176,10 @@ export class Delete${name}Response {
   @IsObject() data: Pick<${name}, 'id'>;
 }
 `;
-    (0, fs_1.mkdirSync)(`./src/api/rest/controllers/${fileName}`, { recursive: true });
-    (0, fs_1.writeFileSync)(`./src/api/rest/controllers/${fileName}/${fileName}.dto.ts`, data);
+    (0, fs_1.mkdirSync)(`./src/api/${path}/controllers/${fileName}`, { recursive: true });
+    (0, fs_1.writeFileSync)(`./src/api/${path}/controllers/${fileName}/${fileName}.dto.ts`, data);
 }
-function generateController(name, objectName, fileName) {
+function generateController(name, objectName, fileName, path) {
     const data = `import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -289,8 +289,8 @@ export class ${name}Controller {
   }
 }
 `;
-    (0, fs_1.mkdirSync)(`./src/api/rest/controllers/${fileName}`, { recursive: true });
-    (0, fs_1.writeFileSync)(`./src/api/rest/controllers/${fileName}/${fileName}.controller.ts`, data);
+    (0, fs_1.mkdirSync)(`./src/api/${path}/controllers/${fileName}`, { recursive: true });
+    (0, fs_1.writeFileSync)(`./src/api/${path}/controllers/${fileName}/${fileName}.controller.ts`, data);
 }
 function capitalizeFirstLetter(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -298,6 +298,12 @@ function capitalizeFirstLetter(str) {
 function uncapitalizeFirstLetter(str) {
     return str.charAt(0).toLowerCase() + str.slice(1);
 }
+var CONTROLLER_PATHS;
+(function (CONTROLLER_PATHS) {
+    CONTROLLER_PATHS["REST"] = "rest";
+    CONTROLLER_PATHS["ADMIN"] = "admin";
+    CONTROLLER_PATHS["MOBILE"] = "mobile";
+})(CONTROLLER_PATHS || (CONTROLLER_PATHS = {}));
 function generate(options) {
     const isCurrentDirAProject = (0, fs_1.readdirSync)('.').some((file) => {
         return file === 'package.json';
@@ -310,17 +316,19 @@ function generate(options) {
         .usage(usage)
         .option('n', { alias: 'name', describe: 'Name of entity', type: 'string', demandOption: true })
         .option('d', { alias: 'dir', describe: 'Directory name of entity', type: 'string', demandOption: true })
+        .option('p', { alias: 'path', describe: 'Path of controller', type: 'string', default: CONTROLLER_PATHS.REST })
         .help(true)
         .argv;
     const ENTITY_NAME = capitalizeFirstLetter(argv.name);
     const OBJECT_NAME = uncapitalizeFirstLetter(argv.name);
     const DIR = argv.dir;
+    const PATH = argv.path;
     generateEntity(ENTITY_NAME, DIR);
     generateRepositoryInterface(ENTITY_NAME, DIR);
     generateRepository(ENTITY_NAME, OBJECT_NAME, DIR);
     generateModule(ENTITY_NAME, DIR);
     generateService(ENTITY_NAME, OBJECT_NAME, DIR);
-    generateDto(ENTITY_NAME, DIR);
-    generateController(ENTITY_NAME, OBJECT_NAME, DIR);
+    generateDto(ENTITY_NAME, DIR, PATH);
+    generateController(ENTITY_NAME, OBJECT_NAME, DIR, PATH);
 }
 exports.generate = generate;
