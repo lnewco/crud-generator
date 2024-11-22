@@ -90,7 +90,7 @@ export class ${name}Module {}
 
 function generateService(name: string, objectName: string, fileName: string): void {
   const data = `import { Injectable, Inject } from '@nestjs/common';
-import { ListOptions, ListResult } from '../domain.types';
+import { FindOptions, FindManyResult } from '../domain.types';
 import { I${name}Repository } from './${fileName}.repository.i';
 import { ${name} } from './${fileName}.entity';
 
@@ -105,7 +105,7 @@ export class ${name}Service {
     return this.${objectName}Repository.create(data);
   }
 
-  async get(options: ListOptions<${name}>): Promise<${name}> {
+  async get(options: FindOptions<${name}>): Promise<${name}> {
     return this.${objectName}Repository.get(options);
   }
    
@@ -113,7 +113,7 @@ export class ${name}Service {
     return this.${objectName}Repository.getById(id);
   }
   
-  async list(options?: ListOptions<${name}>): Promise<ListResult<${name}>> {
+  async list(options?: FindOptions<${name}>): Promise<FindManyResult<${name}>> {
     return this.${objectName}Repository.list(options);
   }
 
@@ -130,7 +130,7 @@ export class ${name}Service {
   writeFileSync(`./src/domain/${fileName}/${fileName}.service.ts`, data);
 }
 
-function generateDto(name: string, fileName: string): void {
+function generateDto(name: string, fileName: string, path: ControllerPathsType): void {
   const data = `import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsString, ValidateNested, IsUUID, IsPositive, IsInt, IsOptional, IsObject, IsEnum, IsDateString } from 'class-validator';
 import { PartialType, PickType } from '@nestjs/swagger';
@@ -181,13 +181,12 @@ export class Delete${name}Response {
 }
 `;
 
-  mkdirSync(`./src/api/rest/controllers/${fileName}`, { recursive: true });
-  writeFileSync(`./src/api/rest/controllers/${fileName}/${fileName}.dto.ts`, data);
+  mkdirSync(`./src/api/${path}/controllers/${fileName}`, { recursive: true });
+  writeFileSync(`./src/api/${path}/controllers/${fileName}/${fileName}.dto.ts`, data);
 }
 
-function generateController(name: string, objectName: string, fileName: string): void {
+function generateController(name: string, objectName: string, fileName: string, path: ControllerPathsType): void {
   const data = `import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ${name}Service } from '../../../../domain/${fileName}/${fileName}.service';
 import {
@@ -203,13 +202,14 @@ import {
   Delete${name}Response, Update${name}Params,
 } from './${fileName}.dto';
 
+// TODO: add guard if needed
+@UseGuards()
 @ApiTags('${name}s')
 @Controller('${fileName}s')
 export class ${name}Controller {
   constructor(private ${objectName}Service: ${name}Service) {}
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create new ${fileName}' })
   public async create${name}(@Req() req, @Body() body: Create${name}Body): Promise<Create${name}Response> {
     const res = await this.${objectName}Service.create({
@@ -228,7 +228,6 @@ export class ${name}Controller {
   }
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'List ${fileName}s' })
   public async list${name}s(@Req() req, @Query() query: List${name}sQuery): Promise<List${name}sResponse> {
     const result = await this.${objectName}Service.list({
@@ -254,7 +253,6 @@ export class ${name}Controller {
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get ${fileName}' })
   public async get${name}(@Param() params: Get${name}Params): Promise<Get${name}Response> {
     return {
@@ -263,7 +261,6 @@ export class ${name}Controller {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update ${fileName}' })
   async update${name}(
     @Req() req,
@@ -283,7 +280,6 @@ export class ${name}Controller {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete ${fileName}' })
-  @UseGuards(AuthGuard('jwt'))
   async delete${name}(@Req() req, @Param() params: Delete${name}Params): Promise<Delete${name}Response> {
     await this.${objectName}Service.delete(params.id);
 
@@ -296,8 +292,8 @@ export class ${name}Controller {
 }
 `;
 
-  mkdirSync(`./src/api/rest/controllers/${fileName}`, { recursive: true });
-  writeFileSync(`./src/api/rest/controllers/${fileName}/${fileName}.controller.ts`, data);
+  mkdirSync(`./src/api/${path}/controllers/${fileName}`, { recursive: true });
+  writeFileSync(`./src/api/${path}/controllers/${fileName}/${fileName}.controller.ts`, data);
 }
 
 function capitalizeFirstLetter(str: string): string {
@@ -308,6 +304,13 @@ function uncapitalizeFirstLetter(str: string): string {
   return str.charAt(0).toLowerCase() + str.slice(1);
 }
 
+enum CONTROLLER_PATHS {
+	REST = 'rest',
+	ADMIN = 'admin',
+	MOBILE = 'mobile',
+}
+
+type ControllerPathsType = `${CONTROLLER_PATHS}`;
 
 export function generate (options: any): void {
   const isCurrentDirAProject = readdirSync('.').some((file: string) => {
@@ -323,18 +326,20 @@ export function generate (options: any): void {
     .usage(usage)
     .option('n', {alias: 'name', describe: 'Name of entity', type: 'string', demandOption: true })
     .option('d', {alias: 'dir', describe: 'Directory name of entity', type: 'string', demandOption: true })
+		.option('p', {alias: 'path', describe: 'Path of controller', type: 'string', default: CONTROLLER_PATHS.REST })
     .help(true)
     .argv;
 
   const ENTITY_NAME = capitalizeFirstLetter(argv.name);
   const OBJECT_NAME = uncapitalizeFirstLetter(argv.name);
   const DIR = argv.dir;
+	const PATH = argv.path;
 
   generateEntity(ENTITY_NAME, DIR);
   generateRepositoryInterface(ENTITY_NAME, DIR);
   generateRepository(ENTITY_NAME, OBJECT_NAME, DIR);
   generateModule(ENTITY_NAME, DIR);
   generateService(ENTITY_NAME, OBJECT_NAME, DIR);
-  generateDto(ENTITY_NAME, DIR);
-  generateController(ENTITY_NAME, OBJECT_NAME, DIR);
+  generateDto(ENTITY_NAME, DIR, PATH);
+  generateController(ENTITY_NAME, OBJECT_NAME, DIR, PATH);
 }
