@@ -130,7 +130,7 @@ export class ${name}Service {
   writeFileSync(`./src/domain/${fileName}/${fileName}.service.ts`, data);
 }
 
-function generateDto(name: string, fileName: string, path: ControllerPathType): void {
+function generateDto(name: string, fileName: string, path: ControllerPathsType): void {
   const data = `import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsNumber, IsString, ValidateNested, IsUUID, IsPositive, IsInt, IsOptional, IsObject, IsEnum, IsDateString } from 'class-validator';
 import { PartialType, PickType } from '@nestjs/swagger';
@@ -185,7 +185,7 @@ export class Delete${name}Response {
   writeFileSync(`./src/api/${path}/controllers/${fileName}/${fileName}.dto.ts`, data);
 }
 
-function generateController(name: string, objectName: string, fileName: string, path: ControllerPathType): void {
+function generateController(name: string, objectName: string, fileName: string, path: ControllerPathsType): void {
   const data = `import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -314,7 +314,7 @@ enum CONTROLLER_PATHS {
 	MOBILE = 'mobile',
 }
 
-type ControllerPathType = `${CONTROLLER_PATHS}`;
+type ControllerPathsType = `${CONTROLLER_PATHS}`;
 
 export function generate (options: any): void {
   const isCurrentDirAProject = readdirSync('.').some((file: string) => {
