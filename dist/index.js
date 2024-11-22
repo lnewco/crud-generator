@@ -181,7 +181,6 @@ export class Delete${name}Response {
 }
 function generateController(name, objectName, fileName, path) {
     const data = `import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ${name}Service } from '../../../../domain/${fileName}/${fileName}.service';
 import {
@@ -197,13 +196,14 @@ import {
   Delete${name}Response, Update${name}Params,
 } from './${fileName}.dto';
 
+// TODO: add guard if needed
+@UseGuards()
 @ApiTags('${name}s')
 @Controller('${fileName}s')
 export class ${name}Controller {
   constructor(private ${objectName}Service: ${name}Service) {}
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Create new ${fileName}' })
   public async create${name}(@Req() req, @Body() body: Create${name}Body): Promise<Create${name}Response> {
     const res = await this.${objectName}Service.create({
@@ -222,7 +222,6 @@ export class ${name}Controller {
   }
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'List ${fileName}s' })
   public async list${name}s(@Req() req, @Query() query: List${name}sQuery): Promise<List${name}sResponse> {
     const result = await this.${objectName}Service.list({
@@ -248,7 +247,6 @@ export class ${name}Controller {
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get ${fileName}' })
   public async get${name}(@Param() params: Get${name}Params): Promise<Get${name}Response> {
     return {
@@ -257,7 +255,6 @@ export class ${name}Controller {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Update ${fileName}' })
   async update${name}(
     @Req() req,
@@ -277,7 +274,6 @@ export class ${name}Controller {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete ${fileName}' })
-  @UseGuards(AuthGuard('jwt'))
   async delete${name}(@Req() req, @Param() params: Delete${name}Params): Promise<Delete${name}Response> {
     await this.${objectName}Service.delete(params.id);
 
