@@ -42,22 +42,33 @@ import { ${name} } from '../../../domain/${fileName}/${fileName}.entity';
 import { ${name} as ${name}Model, Prisma } from '@prisma/client';
 import { I${name}Repository } from '../../../domain/${fileName}/${fileName}.repository.i';
 import { DatabaseService } from '../../database/database.service';
-import { ListOptions, ListResult } from '../../../domain/domain.types';
 import { BaseRepository } from './base/base.repository';
 import * as _ from 'lodash';
   
 @Injectable()
 class Repository extends BaseRepository<${name}, ${name}Model> implements I${name}Repository {
-  constructor(private readonly databaseService: DatabaseService) { }
-  
-   private fromEntity(${objectName}: Partial<${name}>): Omit<${name}Model, 'updatedAt'> {
+    // TODO: Set model name
+    protected readonly modelName = '${name}';
+
+    constructor(private readonly databaseService: DatabaseService) {
+        super(databaseService);
+    }
+    
+    protected get model(): Prisma.${name}Delegate {
+        return this.databaseService.${objectName};
+    }
+
+    // TODO: if needed, add property
+    protected getSearchFilterFields = [];
+
+   protected fromEntity(${objectName}: Partial<${name}>): Omit<${name}Model, 'updatedAt'> {
     return {
       ...${objectName},
       createdAt: ${objectName}.createdAt || undefined,
     } as ${name}Model;
   }
 
-  private toEntity(data: ${name}Model): ${name} {
+  protected toEntity(data: ${name}Model): ${name} {
     return new ${name}({
       ...data,
     });
@@ -74,13 +85,13 @@ export const ${name}Repository: Provider = {
 }
 function generateModule(name, fileName) {
     const data = `import { Module } from '@nestjs/common';
-import { RepositoryModule } from '../../infra/repository/repository.module';
+import { RepositoryModule } from 'src/infra/database/repository.module';
 import { ${name}Service } from './${fileName}.service';
 
 @Module({
-  imports:   [RepositoryModule],
-  providers: [${name}Service],
-  exports:   [${name}Service],
+    imports:   [RepositoryModule],
+    providers: [${name}Service],
+    exports:   [${name}Service],
 })
 export class ${name}Module {}
 `;
@@ -104,23 +115,23 @@ export class ${name}Service {
   }
 
   async get(options: FindOptions<${name}>): Promise<${name}> {
-    return this.${objectName}Repository.get(options);
+    return this.${objectName}Repository.find(options);
   }
    
   public async getById(id: string): Promise<${name}> {
-    return this.${objectName}Repository.getById(id);
+    return this.${objectName}Repository.findById(id);
   }
   
   async list(options?: FindOptions<${name}>): Promise<FindManyResult<${name}>> {
-    return this.${objectName}Repository.list(options);
+    return this.${objectName}Repository.findMany(options);
   }
 
   async update(id: string, data: Partial<Omit<${name}, 'id'>>): Promise<${name}> {
-    return this.${objectName}Repository.update(id, data);
+    return this.${objectName}Repository.updateById(id, data);
   }
 
   async delete(id: string): Promise<void> {
-    return this.${objectName}Repository.delete(id);
+    return this.${objectName}Repository.deleteById(id);
   }
 }
 `;
