@@ -20,16 +20,11 @@ export class ${name} {
 }
 
 function generateRepositoryInterface(name: string, fileName: string): void {
-  const data = `import { ${name} } from './${fileName}.entity';
-import { ListOptions, ListResult } from '../domain.types';
+  const data = `import { ${name} } from './admin.entity';
+import { ${name} as ${name}Model } from '@prisma/client';
+import { IBaseRepository } from 'src/infra/database/repository/base/base.repository.i';
 
-export interface I${name}Repository {
-  create(data: Partial<${name}>): Promise<${name}>;
-  get(data: ListOptions<${name}>): Promise<${name} | null>;
-  getById(id: string): Promise<${name}>;
-  list(options?: ListOptions<${name}>): Promise<ListResult<${name}>>;
-  update(id: string, data: Omit<Partial<${name}>, 'id'>): Promise<${name}>;
-  delete(id: string): Promise<void>;
+export interface I${name}Repository extends IBaseRepository<${name}, ${name}Model> {}
 }`;
 
   writeFileSync(`./src/domain/${fileName}/${fileName}.repository.i.ts`, data);
@@ -46,7 +41,6 @@ import * as _ from 'lodash';
   
 @Injectable()
 class Repository extends BaseRepository<${name}, ${name}Model> implements I${name}Repository {
-    // TODO: Set model name
     protected readonly modelName = '${name}';
 
     constructor(private readonly databaseService: DatabaseService) {
@@ -57,27 +51,27 @@ class Repository extends BaseRepository<${name}, ${name}Model> implements I${nam
         return this.databaseService.${objectName};
     }
 
-    // TODO: if needed, add property
-    protected getSearchFilterFields = [];
+    protected getSearchFilterFields = ['id'];
 
-   protected fromEntity(${objectName}: Partial<${name}>): Omit<${name}Model, 'updatedAt'> {
-    return {
-      ...${objectName},
-      createdAt: ${objectName}.createdAt || undefined,
-    } as ${name}Model;
-  }
+    protected fromEntity(${objectName}: Partial<${name}>): Omit<${name}Model, 'updatedAt'> {
+        return {
+            ...${objectName},
+            createdAt: ${objectName}.createdAt || undefined,
+        } as ${name}Model;
+    }
 
-  protected toEntity(data: ${name}Model): ${name} {
-    return new ${name}({
-      ...data,
-    });
-  }
+    protected toEntity(data: ${name}Model): ${name} {
+        return new ${name}({
+            ...data,
+        });
+    }
 }
 
 export const ${name}Repository: Provider = {
-  provide:  '${name}Repository',
-  useClass: Repository,
+    provide:  '${name}Repository',
+    useClass: Repository,
 };
+
 `;
   mkdirSync(`./src/infra/repository/${fileName}`, { recursive: true });
   writeFileSync(`./src/infra/database/repository/${fileName}.repository.ts`, data);
@@ -316,7 +310,6 @@ function uncapitalizeFirstLetter(str: string): string {
 }
 
 enum CONTROLLER_PATHS {
-	REST = 'rest',
 	ADMIN = 'admin',
 	MOBILE = 'mobile',
 }
@@ -337,7 +330,7 @@ export function generate (options: any): void {
     .usage(usage)
     .option('n', {alias: 'name', describe: 'Name of entity', type: 'string', demandOption: true })
     .option('d', {alias: 'dir', describe: 'Directory name of entity', type: 'string', demandOption: true })
-		.option('p', {alias: 'path', describe: 'Path of controller', type: 'string', default: CONTROLLER_PATHS.REST })
+		.option('p', {alias: 'path', describe: 'Path of controller', type: 'string', default: CONTROLLER_PATHS.ADMIN })
     .help(true)
     .argv;
 
